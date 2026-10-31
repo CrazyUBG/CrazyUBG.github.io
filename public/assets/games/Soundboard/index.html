@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meme Soundboard</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --text-color: #f8fafc;
+      --card-bg: #1e293b;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    h1 {
+      margin-bottom: 2rem;
+      font-size: 2.5rem;
+      letter-spacing: 1px;
+    }
+
+    /* Controls row */
+    .controls-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stop-btn {
+      background-color: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 0.8rem 2rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.2s ease;
+    }
+
+    .stop-btn:hover {
+      filter: brightness(1.15);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .stop-btn:active {
+      transform: translateY(2px) scale(0.95);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Overlap toggle button */
+    .overlap-btn {
+      background-color: #334155;
+      color: white;
+      border: 2px solid #475569;
+      border-radius: 999px;
+      padding: 0.8rem 2rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .overlap-btn:hover {
+      filter: brightness(1.15);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .overlap-btn:active {
+      transform: translateY(2px) scale(0.95);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .overlap-btn.active {
+      background-color: #16a34a;
+      border-color: #22c55e;
+    }
+
+    /* Section switch button (Music <-> Memes) */
+    .nav-btn {
+      background-color: #7c3aed;
+      color: white;
+      border: 2px solid #a78bfa;
+      border-radius: 999px;
+      padding: 0.8rem 2rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      filter: brightness(1.15);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .nav-btn:active {
+      transform: translateY(2px) scale(0.95);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .section[hidden] {
+      display: none;
+    }
+
+    .empty-note {
+      max-width: 520px;
+      text-align: center;
+      line-height: 1.5;
+      opacity: 0.8;
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 16px;
+    }
+
+    .soundboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    /* Round Button Styling */
+    .sound-btn {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      text-align: center;
+      justify-self: center;
+    }
+
+    .sound-btn:hover {
+      filter: brightness(1.15);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .sound-btn:active {
+      transform: translateY(2px) scale(0.95);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .emoji {
+      font-size: 1.8rem;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  V1.3 © 2026 Craziest UBG, all rights reserved.
+  <h1 id="pageTitle">🔊 Meme Soundboard (BETA)</h1>
+  <div class="controls-row">
+    <button class="stop-btn" id="stopAll">⏹ Stop All Sounds</button>
+    <button class="overlap-btn" id="overlapToggle">🔁 Overlap: OFF</button>
+    <button class="nav-btn" id="navBtn">🎵 Go to Music</button>
+  </div>
+
+  <!-- MEME SOUNDS SECTION -->
+  <div class="section" id="memeSection">
+    <div class="soundboard-grid" id="soundboard"></div>
+  </div>
+
+  <!-- MUSIC SECTION -->
+  <div class="section" id="musicSection" hidden>
+    <div class="soundboard-grid" id="musicboard"></div>
+    <div class="empty-note" id="musicEmpty" hidden>
+      No songs added yet. Open the code and add tracks to the
+      <code>MUSIC_TRACKS</code> list (name + mp3 link) and they'll show up here.
+    </div>
+  </div>
+
+  <script>
+    const MEME_SOUNDS = [
+      {
+        name: "Bruh",
+        emoji: "",
+        color: "#CBC2E777", // Pink
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789940985083-94f4409f-346d-459e-b206-6aa8c1fdf1f4.mp3"
+         },
+      {
+        name: "La Peace",
+        emoji: "",
+        color: "#26619C",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790032904747-c659129b-bc2f-47b0-a6d9-6b6f1f6c5a7b.mp3"
+        },
+      {
+        name: "rizz sound effect",
+        emoji: "",
+        color: "#3F9B0B",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790033026820-2c672dd5-7418-485a-b777-55351ae4349c.mp3"
+           },
+      {
+        name: "Fahh",
+        emoji: "",
+        color: "#FF0000",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789969578555-1b1b1bd5-13e1-4f5e-a2eb-a987386c3c03.mp3"
+           },
+      {
+        name: "Fahh #2",
+        emoji: "",
+        color: "#FF0000",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789969674557-8336ab94-e445-4a07-a25e-c2046d449050.mp3"
+            },
+      {
+        name: "I've Got This FAAAAAAAAAHHHHH",
+        emoji: "",
+        color: "#FF0000",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789969793681-ac04b396-866e-40ab-a712-e76db0722bcf.mp3"
+        },
+      {
+        name: "fahhh pump sound",
+        emoji: "",
+        color: "#FF0000",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790033468852-b87f4e77-51af-4e21-bee0-58e76659e06c.mp3"
+        },
+      {
+        name: "Discord Join",
+        emoji: "",
+        color: "#5865F2",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790031364540-4303435d-00dc-4a85-8e8c-69e50ebac98e.mp3"
+        },
+      {
+        name: "Discord call",
+        emoji: "",
+        color: "#5865F2",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1791077546356-eac780c4-9a55-4869-9cc0-ce15ef18348e.mp3"
+        },
+      {
+        name: "AAAAAAAA",
+        emoji: "",
+        color: "#832979",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1793159041490-6c451188-13f7-48cf-98b1-d4a78267327b.mp3"
+        },
+      {
+        name: "Lobotomy",
+        emoji: "",
+        color: "#006400",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1793159228278-892899c2-1115-4fba-9874-82aca66a951a.mp3"
+        },
+      {
+        name: "It was at this moment he knew",
+        emoji: "",
+        color: "#F13333",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1793159405879-b3bdcc43-fbb2-4448-8723-f6f792c7db36.mp3"
+        },
+      {
+        name: "MAN SNORING",
+        emoji: "",
+        color: "#586335F2",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790310515777-98c9084f-4a02-444a-a1fc-a06a2c849054.mp3"
+      },
+      {
+        name: "Verity Disstrack (FULL)",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789943991127-15a75696-1eda-4797-80eb-d1baf8e3c6ec.mp3"
+         },
+      {
+        name: "Hey its me its Verity!",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790032663082-ee01a554-75c9-43a2-8259-c05890650d8d.mp3"
+         },
+      {
+        name: "Verity Edit",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790032488502-91fd0949-a6b1-45bd-a669-38b84a55294a.mp3"
+        },
+      {
+        name: "Verity Beatbox",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1791076595300-d1b3521e-ab51-4f17-bbc5-905f688dfc93.mp3"
+        },
+      {
+        name: "Verity (stfu)",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1791076818774-9f09e236-3776-4f0e-8a0b-da89f680bce0.mp3"
+        },
+      {
+        name: "Clutterfunk x Verity",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1791077292841-fdc68e8c-1599-44d4-9ae8-070b90250cce.mp3"
+        },
+      {
+        name: "gypsy verity song",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1792986979519-4495f24d-e33c-4fba-ad2a-e9bab81ed926.mp3"
+        },
+      {
+        name: "gypsy verity song 2",
+        emoji: "",
+        color: "#FFFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1792987077212-f9c26513-359e-41a0-9ee9-1010dc8d04a4.mp3"
+        },
+      {
+        name: "Misery disstrack",
+        emoji: "",
+        color: "#40E0D0",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789969920526-9c5b0eac-c9e4-464a-950e-a665b81041fc.mp3"
+         },
+      {
+        name: "bad piggies x misery x random",
+        emoji: "",
+        color: "#40E0D0",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790032773441-76cf0ee2-8379-4098-819a-efe596bf36a8.mp3"
+        },
+      {
+        name: "Tiki tiki boosted",
+        emoji: "",
+        color: "#00008B",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790310219738-1a3ae630-b938-4ed9-a609-a75c9f80a7ae.mp3"
+      },
+      {
+        name: "Hub Intro Sound",
+        emoji: "",
+        color: "#f59e0b",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789942684402-a5dbbd26-25ae-4562-ae83-4bd5aa5d9549.mp3"
+        },
+      {
+        name: "M e o w ~",
+        emoji: "",
+        color: "#AAFF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789945592265-21628b41-c3cd-4fae-86cb-ef8d15b5e116.mp3"
+        },
+      {
+        name: "industry baby Mega Mashup",
+        emoji: "",
+        color: "#AAFF0330",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1791077427989-254bb871-159f-4304-8dbf-1bb7c80c2224.mp3"
+          },
+      {
+        name: "my mommy said no more skibidi toilet",
+        emoji: "",
+        color: "#AAF",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789945845639-31e09e7f-11af-4bd3-9de1-b0cad565fbdc.mp3"
+          },
+      {
+        name: "Fart",
+        emoji: "",
+        color: "#00FF00",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790033309729-7210f08e-dd69-469b-8175-d5b5f2767470.mp3"
+         },
+      {
+        name: "ggez diss song",
+        emoji: "",
+        color: "#E75480",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1791063418087-8a0028c1-bcd0-4d74-b66d-25b3e2f5f19b.mp3"
+             },
+      {
+        name: "he he he ha clash royale",
+        emoji: "",
+        color: "#AAF3",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789970163088-f6e82cf9-c8cd-4395-b9da-bfd6d0cbfee8.mp3"
+        },
+      {
+        name: "gah dayum",
+        emoji: "",
+        color: "#AAF553",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790310386166-7b91a6cf-0a1d-4517-bcb3-982d5184315f.mp3"
+        },
+      {
+        name: "he took a bite of a boneless wing song",
+        emoji: "",
+        color: " #C4A484",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789970798330-ded29f06-335d-48f6-b7cd-f4de17d35fae.mp3"
+         },
+      {
+        name: "Samsung BASS BOOSTED",
+        emoji: "",
+        color: "#1428A0",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789970671560-a3f0a737-fe71-4efc-b50b-efe66ac0dc6e.mp3"
+        },
+      {
+        name: "Samsung Bass Boosted Alarm",
+        emoji: "",
+        color: "#1428A0",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1793159652769-280fd1ad-17b2-40b5-892a-fc438aadc448.mp3"
+        },
+      {
+        name: "indian song",
+        emoji: "",
+        color: "#140",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790310029986-8cc09c70-307f-4c78-9886-7d33e4877b7f.mp3"
+             },
+      {
+        name: "Pluh",
+        emoji: "",
+        color: "#AA55F3",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789970500208-1422d6ea-38fc-437c-9622-f93be1a8b269.mp3"
+            },
+      {
+        name: "Bark Fart",
+        emoji: "",
+        color: "#A52A2A",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789970302268-7aaf1182-8a55-4bde-a6f0-914115449524.mp3"
+          },
+      {
+        name: "( ͠° ͟ʖ ͡°)",
+        emoji: "",
+        color: "#AAFF4433",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789945700608-7f757afb-1205-442d-9dc9-4201626927ab.mp3"
+           },
+      {
+        name: "House of memories x bad piggies",
+        emoji: "",
+        color: "#A433",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790031321118-0f349ae0-2b8b-4d4f-bccb-46a19500bd27.mp3"
+        },
+      {
+        name: "uwu",
+        emoji: "",
+        color: "#ec4899",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790033227818-aebb33cd-e3c6-4bf0-bafa-416fb9aa2618.mp3"
+      },
+      {
+        name: "Metal pipe clang",
+        emoji: "",
+        color: "#808080",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789943278936-3380012f-6927-4498-8c60-0533530a3298.mp3"
+        },
+      {
+        name: "SAY WALAHI",
+        emoji: "",
+        color: " #ADD8E6",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789970969850-e9d85a51-07d4-46fe-83c1-9a9375640d47.mp3"
+      },
+      {
+        name: "Vine Boom",
+        emoji: "",
+        color: "#0000FF",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789941033675-e4b6c929-2913-4b5c-a9c3-5e7cb8330973.mp3"
+      },
+      {
+        name: "Anime Ahh",
+        emoji: "",
+        color: "#ec4899",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789941130091-c04762ae-ec47-4214-9555-c65ef760ddf3.mp3"
+        },
+      {
+        name: "Bad piggies x Eminem",
+        emoji: "",
+        color: "#ec48d399",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790031099844-63a19d82-4178-4904-bf70-5e80db883195.mp3"
+         },
+      {
+        name: "you got them sissy boy",
+        emoji: "",
+        color: "#ec4839",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790031038821-434a758d-a66d-46ca-9942-a805d93209e2.mp3"
+         },
+      {
+        name: "Triple T",
+        emoji: "",
+        color: "#583827",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790030985009-e3cfac3c-cc20-491d-ae49-aacc62437b82.mp3"
+        },
+      {
+        name: "one little pigeon sitting in a tree",
+        emoji: "",
+        color: "#583287",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1793158718218-6955372b-d2aa-4b67-9c75-b39e4c7b3b06.mp3"
+        },
+      {
+        name: "We are Charlie Kirk phonk",
+        emoji: "",
+        color: "#BF40BF",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789945404980-7f619920-054d-430d-bd0e-07190cbe203c.mp3"
+        },
+      {
+        name: "GET OUT",
+        emoji: "",
+        color: "#ec4439",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789944828553-f7673104-d05d-4cf2-a025-bd37851246ae.mp3"
+         },
+      {
+        name: "Bust nut",
+        emoji: "",
+        color: "#ff6621",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789945065214-a59e9178-6936-46e8-85c3-478decb49d9b.mp3"
+        },
+      {
+        name: "Daddyy Chill",
+        emoji: "",
+        color: "#FFB6C1",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790032368597-9c948f9b-9e2f-45a4-836f-e57cb04025ef.mp3"
+        },
+      {
+        name: "Death sound (Fortnite)",
+        emoji: "",
+        color: "#FFB6C331",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1792986814802-deb223fd-b855-44e6-8ea4-cd1b5689a76a.mp3"
+         },
+         {
+        name: "Enrique",
+        emoji: "",
+        color: "#006400",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789941830638-a57a47dc-b167-48cd-82c8-b34f96c9127b.mp3"
+           },
+         {
+        name: "RAAAAH",
+        emoji: "",
+        color: "#400",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1789945208759-67691177-4bf1-4006-af01-179859391c1d.mp3"
+           },
+         {
+        name: "The Files Were Released Vexy",
+        emoji: "",
+        color: "#ADD8E6",
+        type: "audio",
+        src: "https://www.image2url.com/r2/default/audio/1790031233039-b09b31a6-98f5-47e1-a9cd-c620635bdbe2.mp3"
+      }
+    ];
+
+    
+    const MUSIC_TRACKS = [
+      {
+        name: "Placeholder",
+        emoji: "",
+        color: "#3b82f6",
+        type: "audio",
+        src: ""
+      },
+      {
+        name: "Placeholder",
+        emoji: "",
+        color: "#ec4899",
+        type: "audio",
+        src: ""
+      },
+      {
+        name: "Placeholder",
+        emoji: "",
+        color: "#10b981",
+        type: "audio",
+        src: ""
+      },
+      {
+        name: "Placeholder",
+        emoji: "",
+        color: "#8b5cf6",
+        type: "audio",
+        src: ""
+      }
+    ];
+
+    // Web Audio API Setup for Synthesized Sounds
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    
+    const activeAudios = new Set();
+    const activeSynths = new Set();
+
+    
+    let overlapEnabled = false;
+
+    function playSynthSound(startFreq, endFreq, duration) {
+      if (!overlapEnabled) {
+        stopAllSounds();
+      }
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(endFreq, 1), audioCtx.currentTime + duration);
+
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const synth = { osc, gain };
+      activeSynths.add(synth);
+      osc.onended = () => {
+        activeSynths.delete(synth);
+        gain.disconnect();
+      };
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playAudioFile(src) {
+      if (!overlapEnabled) {
+        stopAllSounds();
+      }
+
+      const audio = new Audio(src);
+      activeAudios.add(audio);
+      audio.addEventListener('ended', () => activeAudios.delete(audio));
+      audio.addEventListener('error', () => activeAudios.delete(audio));
+      audio.play().catch(e => {
+        activeAudios.delete(audio);
+        console.error("Error playing audio file:", e);
+      });
+    }
+
+    function stopAllSounds() {
+      // Stop audio files
+      activeAudios.forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+      activeAudios.clear();
+
+      // Stop synthesized sounds
+      activeSynths.forEach(({ osc, gain }) => {
+        try { osc.stop(); } catch (e) { /* already stopped */ }
+        gain.disconnect();
+      });
+      activeSynths.clear();
+    }
+
+    // Stop button + Escape key shortcut
+    document.getElementById('stopAll').addEventListener('click', stopAllSounds);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') stopAllSounds();
+    });
+
+    // Overlap toggle button
+    const overlapBtn = document.getElementById('overlapToggle');
+    overlapBtn.addEventListener('click', () => {
+      overlapEnabled = !overlapEnabled;
+      overlapBtn.textContent = `🔁 Overlap: ${overlapEnabled ? 'ON' : 'OFF'}`;
+      overlapBtn.classList.toggle('active', overlapEnabled);
+    });
+
+    // Build a grid of round buttons from a list of sounds
+    function buildButtons(list, container) {
+      list.forEach(sound => {
+        const btn = document.createElement('button');
+        btn.className = 'sound-btn';
+        btn.style.backgroundColor = sound.color;
+        btn.innerHTML = `<span class="emoji">${sound.emoji || ''}</span><span>${sound.name}</span>`;
+
+        btn.addEventListener('click', () => {
+          if (sound.type === 'synth') {
+            playSynthSound(sound.freq, sound.endFreq, sound.duration);
+          } else if (sound.type === 'audio') {
+            playAudioFile(sound.src);
+          }
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
+    buildButtons(MEME_SOUNDS, document.getElementById('soundboard'));
+    buildButtons(MUSIC_TRACKS, document.getElementById('musicboard'));
+    document.getElementById('musicEmpty').hidden = MUSIC_TRACKS.length > 0;
+
+    // Section switching (Memes <-> Music)
+    const memeSection = document.getElementById('memeSection');
+    const musicSection = document.getElementById('musicSection');
+    const navBtn = document.getElementById('navBtn');
+    const pageTitle = document.getElementById('pageTitle');
+    let showingMusic = false;
+
+    navBtn.addEventListener('click', () => {
+      showingMusic = !showingMusic;
+      stopAllSounds(); // don't carry sounds over into the other section
+      memeSection.hidden = showingMusic;
+      musicSection.hidden = !showingMusic;
+      navBtn.textContent = showingMusic ? 'Back to Meme Sounds' : '🎵 Go to Music (UNFINISHED)';
+      pageTitle.textContent = showingMusic ? '🎵 Music' : '🔊 Meme Soundboard (BETA)';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>
